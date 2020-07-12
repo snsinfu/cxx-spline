@@ -1,0 +1,10 @@
+name: test
+on: push
+
+jobs:
+  build:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: make -C test
