@@ -71,7 +71,7 @@ int main()
 
 ```sh
 git clone https://github.com/snsinfu/cxx-spline.git
-cd cxx-spline/tests
+cd cxx-spline/test
 make
 ```
 
