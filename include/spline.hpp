@@ -166,8 +166,24 @@ private:
         std::vector<double> Y(n_segments + 1);
         std::vector<double> M(n_segments + 1);
 
-        D[0] = 1;
-        D[n_segments] = 1;
+        if (n_segments >= 2) {
+            // Coefficients derived from not-a-knot boundary conditions.
+            D[0] = intervals[0] - intervals[1];
+            U[0] = 2 * intervals[0] + intervals[1];
+            Y[0] = 6 * intervals[1] /
+                (intervals[0] + intervals[1]) *
+                (slopes[1] - slopes[0]);
+
+            L[n_segments] = 2 * intervals[n_segments - 1] + intervals[n_segments - 2];
+            D[n_segments] = intervals[n_segments - 1] - intervals[n_segments - 2];
+            Y[n_segments] = 6 * intervals[n_segments - 1] /
+                (intervals[n_segments - 1] + intervals[n_segments - 2]) *
+                (slopes[n_segments - 1] - slopes[n_segments - 2]);
+        } else {
+            // Natural boundary conditions.
+            D[0] = 1;
+            D[n_segments - 1] = 1;
+        }
 
         for (std::size_t i = 1; i < n_segments; i++) {
             L[i] = intervals[i - 1];
@@ -176,10 +192,46 @@ private:
             Y[i] = 6 * (slopes[i] - slopes[i - 1]);
         }
 
-        detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y, M);
+        // Instead of solving `AM = Y` (where A is the coefficient matrix):
+        //
+        // detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y, M);
+        //
+        // We solve `(A + eps I) M = Y` to avoid division by zero. The small
+        // `eps I` coefficient changes the solution. So, we use an iterative
+        // method to correct the error. The tridiagonal algorithm is O(n) so
+        // the iteration is tolerable computational time-wise. Looks like this
+        // code passes some of the tests. I don't think this is a numerically
+        // stable method though.
 
-        assert(M[0] == 0);
-        assert(M[n_segments] == 0);
+        double mean_diagonal = 0;
+        for (auto const d : D) {
+            mean_diagonal += d;
+        }
+        mean_diagonal /= double(D.size());
+
+        double const epsilon = 1e-4 * mean_diagonal;
+        int const iterations = 16;
+
+        for (int iter = 0; iter < iterations; iter++) {
+            // The tridiagonal algorithm modifies the coefficients in-place.
+            // So, we need to make a copy in each iteration.
+            auto cL = L;
+            auto cD = D;
+            auto cU = U;
+            auto cY = Y;
+
+            // Offset diagonals to reduce the risk of division by zero.
+            for (auto& diagonal : cD) {
+                diagonal += epsilon;
+            }
+
+            // Also offset the rhs vector using previous solution.
+            for (std::size_t i = 0; i <= n_segments; i++) {
+                cY[i] += epsilon * M[i];
+            }
+
+            detail_cubic_spline::solve_tridiagonal_system(cL, cD, cU, cY, M);
+        }
 
         // Derive the polynomial coefficients of each spline segment from the
         // second derivatives `M`.
