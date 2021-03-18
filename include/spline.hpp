@@ -29,7 +29,8 @@
 #define INCLUDED_SNSINFU_SPLINE_HPP
 
 #include <cassert>
-#include <cstddef>
+#include <cmath>
+#include <cstdlib>
 #include <stdexcept>
 #include <vector>
 
@@ -37,28 +38,32 @@
 namespace detail_cubic_spline
 {
     /*
-     * Solves a tridiagonal system of equations. This function clobbers given
-     * coefficient vectors. Used in `cubic_spline::make_spline()`.
+     * Solves a tridiagonal system of equations.
+     *
+     * The arguments lower, diag, upper and rhs define the equations and must
+     * be of the same length (say n). The i-th element of each vector specifies
+     * the i-th linear equation, i = 0 to n - 1 from the top to the bottom.
+     * lower and upper must be padded at lower[0] and upper[n - 1].
+     *
+     * The vectors are modified in-place. The solution is returned to rhs.
      */
     inline void solve_tridiagonal_system(
         std::vector<double>& lower,
         std::vector<double>& diag,
         std::vector<double>& upper,
-        std::vector<double>& rhs,
-        std::vector<double>& solution
+        std::vector<double>& rhs
     )
     {
-        std::size_t const dim = solution.size();
+        std::size_t const dim = rhs.size();
 
         assert(dim != 0);
         assert(lower.size() == dim);
         assert(diag.size() == dim);
         assert(upper.size() == dim);
-        assert(rhs.size() == dim);
 
         // Elimination step.
         for (std::size_t i = 0; i < dim - 1; i++) {
-            if (std::abs(diag[i]) >= abs(lower[i + 1])) {
+            if (std::fabs(diag[i]) >= std::fabs(lower[i + 1])) {
                 // Normal tridiagonal algorithm.
                 auto const w = lower[i + 1] / diag[i];
                 diag[i + 1] -= w * upper[i];
@@ -96,19 +101,21 @@ namespace detail_cubic_spline
             }
             rhs[i] /= diag[i];
         }
-
-        solution = rhs;
     }
 }
 
 
 /*
- * Cubic spline function that interpolates one-dimensional series of values.
+ * Cubic spline functor for interpolating one-dimensional series of values.
  */
 class cubic_spline
 {
+    // Order of the polynomial.
     static constexpr int order = 3;
 
+    // A spline_data defines a single piece of spline function:
+    //   f(t) = sum( a_k * (t - t_0)^k , 0 <= k <= 3 ).
+    // t_0 is the knot and a_0,...,a_3 are the coefficients.
     struct spline_data
     {
         double knot;
@@ -117,8 +124,7 @@ class cubic_spline
 
 public:
     /*
-     * Constructs a cubic spline function that passes through given knots. Uses
-     * natural boundary conditions.
+     * Constructs a cubic spline function that passes through given knots.
      */
     cubic_spline(std::vector<double> const& t, std::vector<double> const& x)
     {
@@ -127,7 +133,7 @@ public:
     }
 
     /*
-     * Evaluates the cubic spline function at `t`.
+     * Evaluates the cubic splines at `t`.
      */
     double operator()(double t) const
     {
@@ -194,7 +200,6 @@ private:
         std::vector<double> D(n_segments + 1);
         std::vector<double> U(n_segments + 1);
         std::vector<double> Y(n_segments + 1);
-        std::vector<double> M(n_segments + 1);
 
         if (n_segments >= 2) {
             // Coefficients derived from not-a-knot boundary conditions.
@@ -222,7 +227,8 @@ private:
             Y[i] = 6 * (slopes[i] - slopes[i - 1]);
         }
 
-        detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y, M);
+        detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y);
+        auto const& M = Y;
 
         // Derive the polynomial coefficients of each spline segment from the
         // second derivatives `M`.
