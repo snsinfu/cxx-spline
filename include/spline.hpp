@@ -1,6 +1,6 @@
 // Cubic spline
 
-// Copyright snsinfu 2020.
+// Copyright snsinfu 2020-2021.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // Permission is hereby granted, free of charge, to any person or organization
@@ -29,75 +29,127 @@
 #define INCLUDED_SNSINFU_SPLINE_HPP
 
 #include <cassert>
-#include <cstddef>
+#include <cmath>
+#include <cstdlib>
 #include <stdexcept>
 #include <vector>
 
 
-namespace detail_cubic_spline {
+namespace detail_cubic_spline
+{
     /*
-     * Solves a tridiagonal system of equations. This function clobbers given
-     * coefficient vectors. Used in `cubic_spline::make_spline()`.
+     * Solves a tridiagonal system of equations.
      *
-     * See: https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
+     * The arguments lower, diag, upper and rhs define the equations and must
+     * be of the same length (say n). The i-th element of each vector specifies
+     * the i-th linear equation, i = 0 to n - 1 from the top to the bottom.
+     * lower and upper must be padded at lower[0] and upper[n - 1].
+     *
+     * The vectors are modified in-place. The solution is returned to rhs.
      */
     inline void solve_tridiagonal_system(
         std::vector<double>& lower,
         std::vector<double>& diag,
         std::vector<double>& upper,
-        std::vector<double>& rhs,
-        std::vector<double>& solution
+        std::vector<double>& rhs
     )
     {
-        std::size_t const dim = solution.size();
+        std::size_t const dim = rhs.size();
 
         assert(dim != 0);
         assert(lower.size() == dim);
         assert(diag.size() == dim);
         assert(upper.size() == dim);
-        assert(rhs.size() == dim);
 
-        for (std::size_t i = 1; i < dim; i++) {
-            auto const w = lower[i] / diag[i - 1];
-            diag[i] -= w * upper[i - 1];
-            rhs[i] -= w * rhs[i - 1];
+        // Elimination step.
+        for (std::size_t i = 0; i < dim - 1; i++) {
+            if (std::fabs(diag[i]) >= std::fabs(lower[i + 1])) {
+                // Normal tridiagonal algorithm.
+                auto const w = lower[i + 1] / diag[i];
+                diag[i + 1] -= w * upper[i];
+                rhs[i + 1] -= w * rhs[i];
+                lower[i + 1] = 0;
+            } else {
+                // Pivoting. Here, we interchange the i-th row and the (i+1)-th
+                // row, then eliminate. Unlike the other branch, the lower
+                // triangular element lower[i+1] will remain. This affects the
+                // back substitution step below.
+                auto const w = diag[i] / lower[i + 1];
+
+                auto const u = diag[i + 1];
+                diag[i] = lower[i + 1];
+                diag[i + 1] = upper[i] - w * u;
+                lower[i + 1] = upper[i + 1];
+                upper[i + 1] *= -w;
+                upper[i] = u;
+
+                auto const r = rhs[i];
+                rhs[i] = rhs[i + 1];
+                rhs[i + 1] = r - w * rhs[i + 1];
+            }
         }
 
-        solution[dim - 1] = rhs[dim - 1] / diag[dim - 1];
+        // Back-substitution step.
+        rhs[dim - 1] /= diag[dim - 1];
 
-        for (std::size_t i_plus = dim - 1; i_plus > 0; i_plus--) {
-            auto const i = i_plus - 1;
-            solution[i] = (rhs[i] - upper[i] * solution[i + 1]) / diag[i];
+        for (std::size_t i_rev = 2; i_rev <= dim; i_rev++) {
+            auto const i = dim - i_rev;
+            if (i == dim - 2) {
+                rhs[i] -= upper[i] * rhs[i + 1];
+            } else {
+                rhs[i] -= upper[i] * rhs[i + 1] + lower[i + 1] * rhs[i + 2];
+            }
+            rhs[i] /= diag[i];
         }
     }
 }
 
 
 /*
- * Cubic spline function that interpolates one-dimensional series of values.
+ * Cubic spline functor for interpolating one-dimensional series of values.
  */
 class cubic_spline
 {
+    // Order of the polynomial.
     static constexpr int order = 3;
 
-    struct spline_data {
+    // A spline_data defines a single piece of spline function:
+    //   f(t) = sum( a_k * (t - t_0)^k , 0 <= k <= 3 ).
+    // t_0 is the knot and a_0,...,a_3 are the coefficients.
+    struct spline_data
+    {
         double knot;
         double coefficients[order + 1];
     };
 
 public:
     /*
-     * Constructs a cubic spline function that passes through given knots. Uses
-     * natural boundary conditions.
+     * Specifies the boundary conditions used to determine the splines.
      */
-    cubic_spline(std::vector<double> const& t, std::vector<double> const& x)
+    enum class boundary_conditions
     {
-        make_spline(t, x);
+        natural,
+        not_a_knot,
+    };
+
+    static constexpr auto natural = boundary_conditions::natural;
+    static constexpr auto not_a_knot = boundary_conditions::not_a_knot;
+
+    /*
+     * Constructs a cubic spline function that passes through given knots.
+     */
+    cubic_spline(
+        std::vector<double> const& t,
+        std::vector<double> const& x,
+        boundary_conditions bc = natural
+    )
+    {
+        make_spline(t, x, bc);
         make_bins();
     }
 
     /*
-     * Evaluates the cubic spline function at `t`.
+     * Evaluates the cubic splines at `t`.
      */
     double operator()(double t) const
     {
@@ -118,7 +170,8 @@ private:
      */
     void make_spline(
         std::vector<double> const& knots,
-        std::vector<double> const& values
+        std::vector<double> const& values,
+        boundary_conditions bc
     )
     {
         if (knots.size() != values.size()) {
@@ -164,11 +217,46 @@ private:
         std::vector<double> D(n_segments + 1);
         std::vector<double> U(n_segments + 1);
         std::vector<double> Y(n_segments + 1);
-        std::vector<double> M(n_segments + 1);
 
-        D[0] = 1;
-        D[n_segments] = 1;
+        if (n_segments == 1) {
+            // Natural (which gives a straight line) is the only sensible choice
+            // if there is only one spline.
+            bc = boundary_conditions::natural;
+        }
 
+        switch (bc) {
+        case boundary_conditions::natural:
+            // These coefficients are derived by assuming that the boundary
+            // splines are linear.
+            D[0] = 1;
+            D[n_segments] = 1;
+            break;
+
+        case boundary_conditions::not_a_knot:
+            // These coefficients are derived by assuming that the boundary
+            // splines are identical to their adjacent splines.
+            {
+                auto const h0 = intervals[0];
+                auto const h1 = intervals[1];
+                auto const s0 = slopes[0];
+                auto const s1 = slopes[1];
+                D[0] = h0 - h1;
+                U[0] = 2 * h0 + h1;
+                Y[0] = -6 * h0 / (h0 + h1) * (s0 - s1);
+            }
+            {
+                auto const h0 = intervals[n_segments - 1];
+                auto const h1 = intervals[n_segments - 2];
+                auto const s0 = slopes[n_segments - 1];
+                auto const s1 = slopes[n_segments - 2];
+                D[n_segments] = h0 - h1;
+                L[n_segments] = 2 * h0 + h1;
+                Y[n_segments] = 6 * h0 / (h0 + h1) * (s0 - s1);
+            }
+            break;
+        }
+
+        // The remaining coefficients are derived from the spline conditions.
         for (std::size_t i = 1; i < n_segments; i++) {
             L[i] = intervals[i - 1];
             D[i] = 2 * (intervals[i - 1] + intervals[i]);
@@ -176,13 +264,14 @@ private:
             Y[i] = 6 * (slopes[i] - slopes[i - 1]);
         }
 
-        detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y, M);
-
-        assert(M[0] == 0);
-        assert(M[n_segments] == 0);
+        // Solve the equations. Solution is returned to Y.
+        detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y);
+        auto const& M = Y;
 
         // Derive the polynomial coefficients of each spline segment from the
         // second derivatives `M`.
+        _splines.clear();
+        _splines.reserve(n_segments);
 
         for (std::size_t i = 0; i < n_segments; i++) {
             spline_data spline;

@@ -4,7 +4,7 @@
 ![Test status][test-badge]
 [![Boost License][license-badge]](LICENSE.txt)
 
-Header-only natural cubic spline interpolator for C++11 and above.
+Header-only cubic spline interpolator for C++11 and above.
 
 [cxx-badge]: https://img.shields.io/badge/C%2B%2B-11-orange.svg
 [test-badge]: https://github.com/snsinfu/cxx-spline/workflows/test/badge.svg
@@ -53,9 +53,7 @@ int main()
     std::vector<double> x = { 1, 0, -1, 0, 1 };
     std::vector<double> y = { 0, 1, 0, -1, 0 };
 
-    // Spline interpolation. Since it uses natural cubic splines, the edges are
-    // extrapolated as straight lines. So, the resulting curve would look like
-    // a deformed circle.
+    // Spline interpolation of each coordinate.
     cubic_spline spline_x(t, x);
     cubic_spline spline_y(t, y);
 
@@ -66,6 +64,22 @@ int main()
     }
 }
 ```
+
+## Boundary conditions
+
+The `cubic_spline` class supports natural and not-a-knot boundary conditions.
+Pass `cubic_spline::natural` or `cubic_spline::not_a_knot` to the constructor
+to choose the boundary conditions. Natural is the default.
+
+```c++
+cubic_spline natural_spline(t, x, cubic_spline::natural);
+cubic_spline notaknot_spline(t, x, cubic_spline::not_a_knot);
+```
+
+The *natural* (or free-end) spline gives the minimum-energy curve in a certain
+physical sense. The *not-a-knot* spline gives a smoother-looking curve when
+used for visualization.
+
 
 ## Testing
 
