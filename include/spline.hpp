@@ -34,7 +34,8 @@
 #include <vector>
 
 
-namespace detail_cubic_spline {
+namespace detail_cubic_spline
+{
     /*
      * Solves a tridiagonal system of equations. This function clobbers given
      * coefficient vectors. Used in `cubic_spline::make_spline()`.
@@ -108,7 +109,8 @@ class cubic_spline
 {
     static constexpr int order = 3;
 
-    struct spline_data {
+    struct spline_data
+    {
         double knot;
         double coefficients[order + 1];
     };
