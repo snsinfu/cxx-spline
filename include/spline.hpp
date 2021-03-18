@@ -124,11 +124,27 @@ class cubic_spline
 
 public:
     /*
+     * Specifies the boundary conditions used to determine the splines.
+     */
+    enum class boundary_conditions
+    {
+        natural,
+        not_a_knot,
+    };
+
+    static constexpr auto natural = boundary_conditions::natural;
+    static constexpr auto not_a_knot = boundary_conditions::not_a_knot;
+
+    /*
      * Constructs a cubic spline function that passes through given knots.
      */
-    cubic_spline(std::vector<double> const& t, std::vector<double> const& x)
+    cubic_spline(
+        std::vector<double> const& t,
+        std::vector<double> const& x,
+        boundary_conditions bc = natural
+    )
     {
-        make_spline(t, x);
+        make_spline(t, x, bc);
         make_bins();
     }
 
@@ -154,7 +170,8 @@ private:
      */
     void make_spline(
         std::vector<double> const& knots,
-        std::vector<double> const& values
+        std::vector<double> const& values,
+        boundary_conditions bc
     )
     {
         if (knots.size() != values.size()) {
@@ -201,25 +218,45 @@ private:
         std::vector<double> U(n_segments + 1);
         std::vector<double> Y(n_segments + 1);
 
-        if (n_segments >= 2) {
-            // Coefficients derived from not-a-knot boundary conditions.
-            D[0] = intervals[0] - intervals[1];
-            U[0] = 2 * intervals[0] + intervals[1];
-            Y[0] = -6 * intervals[0] /
-                (intervals[0] + intervals[1]) *
-                (slopes[0] - slopes[1]);
-
-            D[n_segments] = intervals[n_segments - 1] - intervals[n_segments - 2];
-            L[n_segments] = 2 * intervals[n_segments - 1] + intervals[n_segments - 2];
-            Y[n_segments] = 6 * intervals[n_segments - 1] /
-                (intervals[n_segments - 1] + intervals[n_segments - 2]) *
-                (slopes[n_segments - 1] - slopes[n_segments - 2]);
-        } else {
-            // Natural boundary conditions.
-            D[0] = 1;
-            D[n_segments] = 1;
+        if (n_segments == 1) {
+            // Natural (which gives a straight line) is the only sensible choice
+            // if there is only one spline.
+            bc = boundary_conditions::natural;
         }
 
+        switch (bc) {
+        case boundary_conditions::natural:
+            // These coefficients are derived by assuming that the boundary
+            // splines are linear.
+            D[0] = 1;
+            D[n_segments] = 1;
+            break;
+
+        case boundary_conditions::not_a_knot:
+            // These coefficients are derived by assuming that the boundary
+            // splines are identical to their adjacent splines.
+            {
+                auto const h0 = intervals[0];
+                auto const h1 = intervals[1];
+                auto const s0 = slopes[0];
+                auto const s1 = slopes[1];
+                D[0] = h0 - h1;
+                U[0] = 2 * h0 + h1;
+                Y[0] = -6 * h0 / (h0 + h1) * (s0 - s1);
+            }
+            {
+                auto const h0 = intervals[n_segments - 1];
+                auto const h1 = intervals[n_segments - 2];
+                auto const s0 = slopes[n_segments - 1];
+                auto const s1 = slopes[n_segments - 2];
+                D[n_segments] = h0 - h1;
+                L[n_segments] = 2 * h0 + h1;
+                Y[n_segments] = 6 * h0 / (h0 + h1) * (s0 - s1);
+            }
+            break;
+        }
+
+        // The remaining coefficients are derived from the spline conditions.
         for (std::size_t i = 1; i < n_segments; i++) {
             L[i] = intervals[i - 1];
             D[i] = 2 * (intervals[i - 1] + intervals[i]);
@@ -227,11 +264,14 @@ private:
             Y[i] = 6 * (slopes[i] - slopes[i - 1]);
         }
 
+        // Solve the equations. Solution is returned to Y.
         detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y);
         auto const& M = Y;
 
         // Derive the polynomial coefficients of each spline segment from the
         // second derivatives `M`.
+        _splines.clear();
+        _splines.reserve(n_segments);
 
         for (std::size_t i = 0; i < n_segments; i++) {
             spline_data spline;

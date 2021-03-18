@@ -1,8 +1,4 @@
 // Tests for cubic_spline.
-//
-// Test data can be generated with scipy.interpolate.CubicSpline with
-// bc_type="natural". Do not use interp1d or splprep; these functions use a
-// B-spline algorithm.
 
 #include <catch.hpp>
 
@@ -13,13 +9,14 @@
 #include <spline.hpp>
 
 
+// NATURAL SPLINES -----------------------------------------------------------
 
-TEST_CASE("cubic_spline - edge case - two points")
+TEST_CASE("cubic_spline(natural) - fits a line to two knots")
 {
     std::vector<double> const knots = { 1, 2 };
     std::vector<double> const values = { 10, 20 };
 
-    cubic_spline spline(knots, values);
+    cubic_spline spline(knots, values, cubic_spline::natural);
 
     CHECK(spline(0.5) == Approx(5));
     CHECK(spline(1) == Approx(10));
@@ -28,14 +25,31 @@ TEST_CASE("cubic_spline - edge case - two points")
     CHECK(spline(2.5) == Approx(25));
 }
 
-TEST_CASE("cubic_spline - uniform knots")
+
+// NOT-A-KNOT SPLINES --------------------------------------------------------
+
+TEST_CASE("cubic_spline(not-a-knot) - fits a line to two knots")
+{
+    std::vector<double> const knots = { 1, 2 };
+    std::vector<double> const values = { 10, 20 };
+
+    cubic_spline spline(knots, values, cubic_spline::not_a_knot);
+
+    CHECK(spline(0.5) == Approx(5));
+    CHECK(spline(1) == Approx(10));
+    CHECK(spline(1.5) == Approx(15));
+    CHECK(spline(2) == Approx(20));
+    CHECK(spline(2.5) == Approx(25));
+}
+
+TEST_CASE("cubic_spline(not-a-knot) - works with uniformly-spaced knots")
 {
     std::vector<double> const knots = { 0, 1, 2, 3, 4, 5 };
     std::vector<double> const values = { 1, 2, 1, 0, 1, 2 };
 
-    cubic_spline spline(knots, values);
+    cubic_spline spline(knots, values, cubic_spline::not_a_knot);
 
-    // Knots
+    // The splines reproduce knots.
     for (std::size_t i = 0; i < knots.size(); i++) {
         auto const t = knots[i];
         auto const x = values[i];
@@ -58,7 +72,7 @@ TEST_CASE("cubic_spline - uniform knots")
     }
 }
 
-TEST_CASE("cubic_spline - non-uniform knots")
+TEST_CASE("cubic_spline(not-a-knot) - works with non-uniform knots")
 {
     std::vector<double> const knots = {
         0.68016615, 1.2452488 , 1.63345679, 1.63976631, 2.07816546,
@@ -69,9 +83,9 @@ TEST_CASE("cubic_spline - non-uniform knots")
         0.15871603, -0.40323101, -0.23905208,  0.75523286, -0.38302665
     };
 
-    cubic_spline spline(knots, values);
+    cubic_spline spline(knots, values, cubic_spline::not_a_knot);
 
-    // Knots
+    // The splines reproduce knots.
     for (std::size_t i = 0; i < knots.size(); i++) {
         auto const t = knots[i];
         auto const x = values[i];
@@ -105,30 +119,59 @@ TEST_CASE("cubic_spline - non-uniform knots")
     }
 }
 
-TEST_CASE("cubic_spline - error - no knots")
+
+// DEFAULT BEHAVIOR ----------------------------------------------------------
+
+TEST_CASE("cubic_spline - is natural by default")
+{
+    std::vector<double> const knots = { 0, 1, 2, 3, 4, 5 };
+    std::vector<double> const values = { 1, 2, 1, 0, 1, 2 };
+
+    cubic_spline default_spline(knots, values);
+    cubic_spline natural_spline(knots, values, cubic_spline::natural);
+
+    // Check extrapolated points.
+    double const lower_point = -1;
+    double const upper_point = 6;
+
+    CHECK(default_spline(lower_point) == natural_spline(lower_point));
+    CHECK(default_spline(upper_point) == natural_spline(upper_point));
+}
+
+
+// ERRORS --------------------------------------------------------------------
+
+TEST_CASE("cubic_spline - rejects empty input")
 {
     std::vector<double> const knots = { };
     std::vector<double> const values = { };
     CHECK_THROWS(cubic_spline(knots, values));
 }
 
-TEST_CASE("cubic_spline - error - insufficient knots")
+TEST_CASE("cubic_spline - rejects single-knot input")
 {
     std::vector<double> const knots = { 1 };
     std::vector<double> const values = { 1 };
     CHECK_THROWS(cubic_spline(knots, values));
 }
 
-TEST_CASE("cubic_spline - error - lengths mismatch")
+TEST_CASE("cubic_spline - rejects mismatched input")
 {
     std::vector<double> const knots = { 1, 2, 3, 4 };
     std::vector<double> const values = { 1, 2 };
     CHECK_THROWS(cubic_spline(knots, values));
 }
 
-TEST_CASE("cubic_spline - error - unordered knots")
+TEST_CASE("cubic_spline - rejects unordered knots")
 {
     std::vector<double> const knots = { 3, 2, 1, 0 };
+    std::vector<double> const values = { 1, 2, 1, 2 };
+    CHECK_THROWS(cubic_spline(knots, values));
+}
+
+TEST_CASE("cubic_spline - rejects overlapping knots")
+{
+    std::vector<double> const knots = { 1, 2, 2, 3 };
     std::vector<double> const values = { 1, 2, 1, 2 };
     CHECK_THROWS(cubic_spline(knots, values));
 }
