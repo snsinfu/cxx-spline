@@ -1,6 +1,6 @@
 // Cubic spline
 
-// Copyright snsinfu 2020.
+// Copyright snsinfu 2020-2021.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // Permission is hereby granted, free of charge, to any person or organization
