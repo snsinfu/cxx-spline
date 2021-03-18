@@ -38,8 +38,6 @@ namespace detail_cubic_spline {
     /*
      * Solves a tridiagonal system of equations. This function clobbers given
      * coefficient vectors. Used in `cubic_spline::make_spline()`.
-     *
-     * See: https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
      */
     inline void solve_tridiagonal_system(
         std::vector<double>& lower,
@@ -57,18 +55,48 @@ namespace detail_cubic_spline {
         assert(upper.size() == dim);
         assert(rhs.size() == dim);
 
-        for (std::size_t i = 1; i < dim; i++) {
-            auto const w = lower[i] / diag[i - 1];
-            diag[i] -= w * upper[i - 1];
-            rhs[i] -= w * rhs[i - 1];
+        // Elimination step.
+        for (std::size_t i = 0; i < dim - 1; i++) {
+            if (std::abs(diag[i]) >= abs(lower[i + 1])) {
+                // Normal tridiagonal algorithm.
+                auto const w = lower[i + 1] / diag[i];
+                diag[i + 1] -= w * upper[i];
+                rhs[i + 1] -= w * rhs[i];
+                lower[i + 1] = 0;
+            } else {
+                // Pivoting. Here, we interchange the i-th row and the (i+1)-th
+                // row, then eliminate. Unlike the other branch, the lower
+                // triangular element lower[i+1] will remain. This affects the
+                // back substitution step below.
+                auto const w = diag[i] / lower[i + 1];
+
+                auto const u = diag[i + 1];
+                diag[i] = lower[i + 1];
+                diag[i + 1] = upper[i] - w * u;
+                lower[i + 1] = upper[i + 1];
+                upper[i + 1] *= -w;
+                upper[i] = u;
+
+                auto const r = rhs[i];
+                rhs[i] = rhs[i + 1];
+                rhs[i + 1] = r - w * rhs[i + 1];
+            }
         }
 
-        solution[dim - 1] = rhs[dim - 1] / diag[dim - 1];
+        // Back-substitution step.
+        rhs[dim - 1] /= diag[dim - 1];
 
-        for (std::size_t i_plus = dim - 1; i_plus > 0; i_plus--) {
-            auto const i = i_plus - 1;
-            solution[i] = (rhs[i] - upper[i] * solution[i + 1]) / diag[i];
+        for (std::size_t i_rev = 2; i_rev <= dim; i_rev++) {
+            auto const i = dim - i_rev;
+            if (i == dim - 2) {
+                rhs[i] -= upper[i] * rhs[i + 1];
+            } else {
+                rhs[i] -= upper[i] * rhs[i + 1] + lower[i + 1] * rhs[i + 2];
+            }
+            rhs[i] /= diag[i];
         }
+
+        solution = rhs;
     }
 }
 
@@ -170,19 +198,19 @@ private:
             // Coefficients derived from not-a-knot boundary conditions.
             D[0] = intervals[0] - intervals[1];
             U[0] = 2 * intervals[0] + intervals[1];
-            Y[0] = 6 * intervals[1] /
+            Y[0] = -6 * intervals[1] /
                 (intervals[0] + intervals[1]) *
-                (slopes[1] - slopes[0]);
+                (slopes[0] - slopes[1]);
 
-            L[n_segments] = 2 * intervals[n_segments - 1] + intervals[n_segments - 2];
             D[n_segments] = intervals[n_segments - 1] - intervals[n_segments - 2];
+            L[n_segments] = 2 * intervals[n_segments - 1] + intervals[n_segments - 2];
             Y[n_segments] = 6 * intervals[n_segments - 1] /
                 (intervals[n_segments - 1] + intervals[n_segments - 2]) *
                 (slopes[n_segments - 1] - slopes[n_segments - 2]);
         } else {
             // Natural boundary conditions.
             D[0] = 1;
-            D[n_segments - 1] = 1;
+            D[n_segments] = 1;
         }
 
         for (std::size_t i = 1; i < n_segments; i++) {
@@ -192,46 +220,7 @@ private:
             Y[i] = 6 * (slopes[i] - slopes[i - 1]);
         }
 
-        // Instead of solving `AM = Y` (where A is the coefficient matrix):
-        //
-        // detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y, M);
-        //
-        // We solve `(A + eps I) M = Y` to avoid division by zero. The small
-        // `eps I` coefficient changes the solution. So, we use an iterative
-        // method to correct the error. The tridiagonal algorithm is O(n) so
-        // the iteration is tolerable computational time-wise. Looks like this
-        // code passes some of the tests. I don't think this is a numerically
-        // stable method though.
-
-        double mean_diagonal = 0;
-        for (auto const d : D) {
-            mean_diagonal += d;
-        }
-        mean_diagonal /= double(D.size());
-
-        double const epsilon = 1e-4 * mean_diagonal;
-        int const iterations = 16;
-
-        for (int iter = 0; iter < iterations; iter++) {
-            // The tridiagonal algorithm modifies the coefficients in-place.
-            // So, we need to make a copy in each iteration.
-            auto cL = L;
-            auto cD = D;
-            auto cU = U;
-            auto cY = Y;
-
-            // Offset diagonals to reduce the risk of division by zero.
-            for (auto& diagonal : cD) {
-                diagonal += epsilon;
-            }
-
-            // Also offset the rhs vector using previous solution.
-            for (std::size_t i = 0; i <= n_segments; i++) {
-                cY[i] += epsilon * M[i];
-            }
-
-            detail_cubic_spline::solve_tridiagonal_system(cL, cD, cU, cY, M);
-        }
+        detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y, M);
 
         // Derive the polynomial coefficients of each spline segment from the
         // second derivatives `M`.

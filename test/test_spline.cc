@@ -101,7 +101,7 @@ TEST_CASE("cubic_spline - non-uniform knots")
     for (std::size_t i = 0; i < queries.size(); i++) {
         auto const t = queries[i];
         auto const x = expects[i];
-        CHECK(spline(t) == Approx(x).epsilon(0.2)); // Too generous!
+        CHECK(spline(t) == Approx(x));
     }
 }
 
