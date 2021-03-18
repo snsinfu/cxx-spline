@@ -198,7 +198,7 @@ private:
             // Coefficients derived from not-a-knot boundary conditions.
             D[0] = intervals[0] - intervals[1];
             U[0] = 2 * intervals[0] + intervals[1];
-            Y[0] = -6 * intervals[1] /
+            Y[0] = -6 * intervals[0] /
                 (intervals[0] + intervals[1]) *
                 (slopes[0] - slopes[1]);
 
