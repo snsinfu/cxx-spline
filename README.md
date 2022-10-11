@@ -13,7 +13,11 @@ Header-only cubic spline interpolator for C++11 and above.
 
 ## Prerequisites
 
-Catch2 (standard Linux package from the package manager)
+Catch (standard Linux package from the package manager):
+
+```
+sudo apt install catch
+```
 
 ## Usage
 
