@@ -1,17 +1,14 @@
 # Cubic splines for C++
 
 ![C++11][cxx-badge]
-![Test status][test-badge]
 [![Boost License][license-badge]](LICENSE.txt)
 
 Header-only cubic spline interpolator for C++11 and above.
 
 [cxx-badge]: https://img.shields.io/badge/C%2B%2B-11-orange.svg
-[test-badge]: https://github.com/snsinfu/cxx-spline/workflows/test/badge.svg
 [license-badge]: https://img.shields.io/badge/license-Boost-blue.svg
 
 - [Usage](#usage)
-- [Testing](#testing)
 - [License](#license)
 
 ## Prerequisites
