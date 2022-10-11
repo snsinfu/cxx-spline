@@ -18,3 +18,5 @@ target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
 
 add_executable(test_spline test_spline.cc)
 target_link_libraries(test_spline Catch)
+
+add_test(AllTests test_spline)

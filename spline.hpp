@@ -138,14 +138,16 @@ public:
     /*
      * Constructs a cubic spline function that passes through given knots.
      */
-    cubic_spline(
+    void calc(
         std::vector<double> const& t,
         std::vector<double> const& x,
         boundary_conditions bc = natural
     )
     {
-        make_spline(t, x, bc);
-        make_bins();
+	    _splines.clear();
+	    _bins.clear();
+	    make_spline(t, x, bc);
+	    make_bins();
     }
 
     /*
@@ -353,9 +355,9 @@ private:
 private:
     std::vector<spline_data> _splines;
     std::vector<std::size_t> _bins;
-    double _lower_bound;
-    double _upper_bound;
-    double _bin_interval;
+    double _lower_bound = 0;
+    double _upper_bound = 0;
+    double _bin_interval = 0;
 };
 
 #endif

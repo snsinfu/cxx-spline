@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/bp1/sandbox/cxx-spline/test
+CMAKE_SOURCE_DIR = /home/bp1/sandbox/cxx-spline
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/bp1/sandbox/cxx-spline/test
+CMAKE_BINARY_DIR = /home/bp1/sandbox/cxx-spline
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -91,14 +91,14 @@ test/fast: test
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bp1/sandbox/cxx-spline/test/CMakeFiles /home/bp1/sandbox/cxx-spline/test/CMakeFiles/progress.marks
-	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bp1/sandbox/cxx-spline/test/CMakeFiles 0
+	cd /home/bp1/sandbox/cxx-spline && $(CMAKE_COMMAND) -E cmake_progress_start /home/bp1/sandbox/cxx-spline/CMakeFiles /home/bp1/sandbox/cxx-spline/test/CMakeFiles/progress.marks
+	cd /home/bp1/sandbox/cxx-spline && $(MAKE) -f CMakeFiles/Makefile2 test/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bp1/sandbox/cxx-spline/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	$(MAKE) -f CMakeFiles/Makefile2 clean
+	cd /home/bp1/sandbox/cxx-spline && $(MAKE) -f CMakeFiles/Makefile2 test/clean
 .PHONY : clean
 
 # The main clean target
@@ -108,30 +108,32 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	$(MAKE) -f CMakeFiles/Makefile2 preinstall
+	cd /home/bp1/sandbox/cxx-spline && $(MAKE) -f CMakeFiles/Makefile2 test/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	$(MAKE) -f CMakeFiles/Makefile2 preinstall
+	cd /home/bp1/sandbox/cxx-spline && $(MAKE) -f CMakeFiles/Makefile2 test/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/bp1/sandbox/cxx-spline && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
-#=============================================================================
-# Target rules for targets named test_spline
+# Convenience name for target.
+test/CMakeFiles/test_spline.dir/rule:
+	cd /home/bp1/sandbox/cxx-spline && $(MAKE) -f CMakeFiles/Makefile2 test/CMakeFiles/test_spline.dir/rule
+.PHONY : test/CMakeFiles/test_spline.dir/rule
 
-# Build rule for target.
-test_spline: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 test_spline
+# Convenience name for target.
+test_spline: test/CMakeFiles/test_spline.dir/rule
+
 .PHONY : test_spline
 
 # fast build rule for target.
 test_spline/fast:
-	$(MAKE) -f CMakeFiles/test_spline.dir/build.make CMakeFiles/test_spline.dir/build
+	cd /home/bp1/sandbox/cxx-spline && $(MAKE) -f test/CMakeFiles/test_spline.dir/build.make test/CMakeFiles/test_spline.dir/build
 .PHONY : test_spline/fast
 
 test_spline.o: test_spline.cc.o
@@ -140,7 +142,7 @@ test_spline.o: test_spline.cc.o
 
 # target to build an object file
 test_spline.cc.o:
-	$(MAKE) -f CMakeFiles/test_spline.dir/build.make CMakeFiles/test_spline.dir/test_spline.cc.o
+	cd /home/bp1/sandbox/cxx-spline && $(MAKE) -f test/CMakeFiles/test_spline.dir/build.make test/CMakeFiles/test_spline.dir/test_spline.cc.o
 .PHONY : test_spline.cc.o
 
 test_spline.i: test_spline.cc.i
@@ -149,7 +151,7 @@ test_spline.i: test_spline.cc.i
 
 # target to preprocess a source file
 test_spline.cc.i:
-	$(MAKE) -f CMakeFiles/test_spline.dir/build.make CMakeFiles/test_spline.dir/test_spline.cc.i
+	cd /home/bp1/sandbox/cxx-spline && $(MAKE) -f test/CMakeFiles/test_spline.dir/build.make test/CMakeFiles/test_spline.dir/test_spline.cc.i
 .PHONY : test_spline.cc.i
 
 test_spline.s: test_spline.cc.s
@@ -158,7 +160,7 @@ test_spline.s: test_spline.cc.s
 
 # target to generate assembly for a file
 test_spline.cc.s:
-	$(MAKE) -f CMakeFiles/test_spline.dir/build.make CMakeFiles/test_spline.dir/test_spline.cc.s
+	cd /home/bp1/sandbox/cxx-spline && $(MAKE) -f test/CMakeFiles/test_spline.dir/build.make test/CMakeFiles/test_spline.dir/test_spline.cc.s
 .PHONY : test_spline.cc.s
 
 # Help Target
@@ -185,6 +187,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/bp1/sandbox/cxx-spline && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 
