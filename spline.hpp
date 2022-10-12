@@ -33,7 +33,7 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <vector>
-
+#include <mutex>
 
 namespace detail_cubic_spline
 {
@@ -144,26 +144,41 @@ public:
         boundary_conditions bc = natural
     )
     {
+        splinemutex.lock();
 	    _splines.clear();
 	    _bins.clear();
 	    make_spline(t, x, bc);
-	    make_bins();
+        splinemutex.unlock();
     }
 
     /*
      * Evaluates the cubic splines at `t`.
      */
-    double operator()(double t) const
+    double operator()(double t)
     {
+        splinemutex.lock();
         spline_data const& spline = find_spline(t);
-
         double value = spline.coefficients[order];
         for (int i = order - 1; i >= 0; i--) {
             value *= t - spline.knot;
             value += spline.coefficients[i];
         }
-
+        splinemutex.unlock();
         return value;
+    }
+
+    /**
+     * Gets the lowest timestamp or x value
+     */
+    double getLowerBound() const {
+        return _lower_bound;
+    }
+
+    /**
+     * Gets the highest timestamp or x value
+     */
+    double getUpperBound() const {
+        return _upper_bound;
     }
 
 private:
@@ -289,14 +304,6 @@ private:
 
         _lower_bound = knots.front();
         _upper_bound = knots.back();
-    }
-
-    /*
-     * Builds a bin-based index `_bins` that is used to quickly find a spline
-     * segment covering a query point.
-     */
-    void make_bins()
-    {
         _bin_interval = (_upper_bound - _lower_bound) / double(_splines.size());
 
         // We need to map uniformly-spaced bins to spline segments that may
@@ -341,8 +348,6 @@ private:
         }
         std::size_t index = _bins[bin];
 
-        assert(t >= _splines[index].knot);
-
         for (; index + 1 < _splines.size(); index++) {
             if (t < _splines[index + 1].knot) {
                 break;
@@ -358,6 +363,7 @@ private:
     double _lower_bound = 0;
     double _upper_bound = 0;
     double _bin_interval = 0;
+    std::mutex splinemutex;
 };
 
 #endif
