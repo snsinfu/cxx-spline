@@ -26,7 +26,7 @@ Copy [spline.hpp](spline.hpp) into your include directory. Use
 
 ```c++
 #include <vector>
-#include <spline.hpp>
+#include <cxx-spline.hpp>
 
 int main()
 {
@@ -51,7 +51,7 @@ coordinate values. Example:
 ```c++
 #include <iostream>
 #include <vector>
-#include <spline.hpp>
+#include <cxx-spline.hpp>
 
 int main()
 {

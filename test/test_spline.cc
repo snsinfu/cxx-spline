@@ -6,7 +6,7 @@
 #include <limits>
 #include <vector>
 
-#include <spline.hpp>
+#include <cxx-spline.hpp>
 
 
 // NATURAL SPLINES -----------------------------------------------------------

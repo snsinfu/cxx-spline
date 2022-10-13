@@ -7,6 +7,8 @@ project(cxx-spline)
 add_subdirectory(test)
 enable_testing ()
 
+add_subdirectory(demo)
+
 add_library(cxx-spline INTERFACE)
 
 target_include_directories(cxx-spline INTERFACE .)
