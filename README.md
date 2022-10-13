@@ -21,8 +21,21 @@ sudo apt install catch
 
 ## Usage
 
-Copy [spline.hpp](spline.hpp) into your include directory. Use
-`cubic_spline` class like this:
+It's just the header `cxx-spline.hpp` which you need. Either
+use `make install` to install it on your system or just copy
+the header into your project directory.
+
+### Installing the header on your system
+```
+cmake .
+make
+sudo make install
+```
+or
+
+### Copy [cxx-spline.hpp](cxx-spline.hpp) into your include directory.
+
+### Use `cubic_spline` class like this
 
 ```c++
 #include <vector>
