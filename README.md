@@ -29,6 +29,7 @@ the header into your project directory.
 ```
 cmake .
 make
+make test
 sudo make install
 ```
 or
@@ -56,7 +57,8 @@ int main()
     spline(6.0); // 3
 }
 ```
-You can call `calc` as much as you like to update the splines.
+You can call `calc` as much as you like to update the splines. See the
+demo directory for this file in action.
 
 To interpolate a 2D (or higher dimensional) curve, just create splines for each
 coordinate values. Example:
@@ -86,6 +88,7 @@ int main()
     }
 }
 ```
+See again the demo directory for this example in action.
 
 ## Boundary conditions
 
