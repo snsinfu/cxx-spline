@@ -3,6 +3,8 @@
 ![C++11][cxx-badge]
 [![Boost License][license-badge]](LICENSE.txt)
 
+![alt tag](teaser.png)
+
 Header-only cubic spline interpolator for C++11 and above.
 
 [cxx-badge]: https://img.shields.io/badge/C%2B%2B-11-orange.svg
