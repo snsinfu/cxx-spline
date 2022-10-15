@@ -19,4 +19,8 @@ int main()
 	    fprintf(f,"%f %f\n",tp,yp);
     }
     fclose(f);
+
+    printf("Lower bound = %f, Upper bound = %f\n",
+	   spline.getLowerBound(), spline.getUpperBound()
+	    );
 }

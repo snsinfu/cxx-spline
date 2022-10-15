@@ -170,15 +170,21 @@ public:
     /**
      * Gets the lowest timestamp or x value
      */
-    double getLowerBound() const {
-        return _lower_bound;
+    double getLowerBound() {
+        splinemutex.lock();
+	const double lower = _lower_bound;
+        splinemutex.unlock();
+        return lower;
     }
 
     /**
      * Gets the highest timestamp or x value
      */
-    double getUpperBound() const {
-        return _upper_bound;
+    double getUpperBound() {
+        splinemutex.lock();
+	const double upper = _upper_bound;
+        splinemutex.unlock();
+        return upper;
     }
 
 private:
