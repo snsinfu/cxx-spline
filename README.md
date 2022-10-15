@@ -27,6 +27,8 @@ It's just the header `cxx-spline.hpp` which you need. Either
 use `make install` to install it on your system or just copy
 the header into your project directory.
 
+The class is thread-safe.
+
 ### Installing the header on your system
 ```
 cmake .

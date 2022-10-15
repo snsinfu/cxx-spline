@@ -144,11 +144,8 @@ public:
         boundary_conditions bc = natural
     )
     {
-        splinemutex.lock();
-	    _splines.clear();
-	    _bins.clear();
 	    make_spline(t, x, bc);
-        splinemutex.unlock();
+        _splinemutex.unlock();
     }
 
     /*
@@ -156,14 +153,14 @@ public:
      */
     double operator()(double t)
     {
-        splinemutex.lock();
+        _splinemutex.lock();
         spline_data const& spline = find_spline(t);
         double value = spline.coefficients[order];
         for (int i = order - 1; i >= 0; i--) {
             value *= t - spline.knot;
             value += spline.coefficients[i];
         }
-        splinemutex.unlock();
+        _splinemutex.unlock();
         return value;
     }
 
@@ -171,9 +168,9 @@ public:
      * Gets the lowest timestamp or x value
      */
     double getLowerBound() {
-        splinemutex.lock();
+        _splinemutex.lock();
 	const double lower = _lower_bound;
-        splinemutex.unlock();
+        _splinemutex.unlock();
         return lower;
     }
 
@@ -181,9 +178,9 @@ public:
      * Gets the highest timestamp or x value
      */
     double getUpperBound() {
-        splinemutex.lock();
+        _splinemutex.lock();
 	const double upper = _upper_bound;
-        splinemutex.unlock();
+        _splinemutex.unlock();
         return upper;
     }
 
@@ -291,6 +288,9 @@ private:
         detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y);
         auto const& M = Y;
 
+	_splinemutex.lock();
+	_bins.clear();
+
         // Derive the polynomial coefficients of each spline segment from the
         // second derivatives `M`.
         _splines.clear();
@@ -334,6 +334,7 @@ private:
         }
 
         _bins.shrink_to_fit();
+	_splinemutex.unlock();
     }
 
     /*
@@ -369,7 +370,7 @@ private:
     double _lower_bound = 0;
     double _upper_bound = 0;
     double _bin_interval = 0;
-    std::mutex splinemutex;
+    std::mutex _splinemutex;
 };
 
 #endif
