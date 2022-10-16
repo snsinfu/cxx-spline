@@ -34,10 +34,6 @@ add_executable(errors errors.cpp)
 target_link_libraries(errors Catch)
 add_test(Provoking-errors errors)
 
-add_executable(threadsafe threadsafe.cpp)
-target_link_libraries(threadsafe Catch ${CMAKE_THREAD_LIBS_INIT})
-add_test(Thread-safety threadsafe)
-
 add_executable(repeated repeated.cpp)
 target_link_libraries(repeated Catch)
 add_test(Repeated-spline-calc repeated)

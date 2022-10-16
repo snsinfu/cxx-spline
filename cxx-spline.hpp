@@ -34,7 +34,6 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <vector>
-#include <mutex>
 
 namespace detail_cubic_spline
 {
@@ -137,62 +136,40 @@ public:
     static constexpr auto not_a_knot = boundary_conditions::not_a_knot;
 
     /*
-     * Constructs a cubic spline function that passes through given knots.
-     */
-    void calc(
-        std::vector<double> const& t,
-        std::vector<double> const& x,
-        boundary_conditions bc = natural
-    )
-    {
-	    make_spline(t, x, bc);
-        _splinemutex.unlock();
-    }
-
-    /*
      * Evaluates the cubic splines at `t`.
      */
-    double operator()(double t)
+    double operator()(double t) const
     {
-        _splinemutex.lock();
         spline_data const& spline = find_spline(t);
         double value = spline.coefficients[order];
         for (int i = order - 1; i >= 0; i--) {
             value *= t - spline.knot;
             value += spline.coefficients[i];
         }
-        _splinemutex.unlock();
         return value;
     }
 
     /**
      * Gets the lowest timestamp or x value
      */
-    double getLowerBound() {
-        _splinemutex.lock();
-	const double lower = _lower_bound;
-        _splinemutex.unlock();
-        return lower;
+    double lower_bound() const {
+        return _lower_bound;
     }
 
     /**
      * Gets the highest timestamp or x value
      */
-    double getUpperBound() {
-        _splinemutex.lock();
-	const double upper = _upper_bound;
-        _splinemutex.unlock();
-        return upper;
+    double upper_bound() const {
+        return _upper_bound;
     }
 
-private:
     /*
-     * Constructs spline segments `_splines` for given set of knot points.
+     * Constructs a cubic spline function that passes through given knots.
      */
-    void make_spline(
+    cubic_spline (
         std::vector<double> const& knots,
         std::vector<double> const& values,
-        boundary_conditions bc
+        boundary_conditions bc = natural
     )
     {
         if (knots.size() != values.size()) {
@@ -289,7 +266,6 @@ private:
         detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y);
         auto const& M = Y;
 
-	_splinemutex.lock();
 	_bins.clear();
 
         // Derive the polynomial coefficients of each spline segment from the
@@ -335,8 +311,9 @@ private:
         }
 
         _bins.shrink_to_fit();
-	_splinemutex.unlock();
     }
+
+private:
 
     /*
      * Returns the spline segment that covers given point `t`.
@@ -365,13 +342,11 @@ private:
         return _splines[index];
     }
 
-private:
     std::vector<spline_data> _splines;
     std::vector<std::size_t> _bins;
     double _lower_bound = 0;
     double _upper_bound = 0;
     double _bin_interval = 0;
-    std::mutex _splinemutex;
 };
 
 #endif

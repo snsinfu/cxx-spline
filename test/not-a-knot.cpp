@@ -17,8 +17,7 @@ TEST_CASE("cubic_spline(not-a-knot) - fits a line to two knots")
     std::vector<double> const knots = { 1, 2 };
     std::vector<double> const values = { 10, 20 };
 
-    cubic_spline spline;
-    spline.calc(knots, values, cubic_spline::not_a_knot);
+    cubic_spline spline(knots, values, cubic_spline::not_a_knot);
 
     CHECK(spline(0.5) == Approx(5));
     CHECK(spline(1) == Approx(10));
@@ -32,8 +31,7 @@ TEST_CASE("cubic_spline(not-a-knot) - works with uniformly-spaced knots")
     std::vector<double> const knots = { 0, 1, 2, 3, 4, 5 };
     std::vector<double> const values = { 1, 2, 1, 0, 1, 2 };
 
-    cubic_spline spline;
-    spline.calc(knots, values, cubic_spline::not_a_knot);
+    cubic_spline spline(knots, values, cubic_spline::not_a_knot);
 
     // The splines reproduce knots.
     for (std::size_t i = 0; i < knots.size(); i++) {
@@ -69,8 +67,7 @@ TEST_CASE("cubic_spline(not-a-knot) - works with non-uniform knots")
         0.15871603, -0.40323101, -0.23905208,  0.75523286, -0.38302665
     };
 
-    cubic_spline spline;
-    spline.calc(knots, values, cubic_spline::not_a_knot);
+    cubic_spline spline(knots, values, cubic_spline::not_a_knot);
 
     // The splines reproduce knots.
     for (std::size_t i = 0; i < knots.size(); i++) {

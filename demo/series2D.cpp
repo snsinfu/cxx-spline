@@ -14,10 +14,8 @@ int main()
     std::vector<double> y = { 0, 1, 0, -1, 0 };
 
     // Spline interpolation of each coordinate.
-    cubic_spline spline_x;
-    spline_x.calc(t, x);
-    cubic_spline spline_y;
-    spline_y.calc(t, y);
+    cubic_spline spline_x(t, x);
+    cubic_spline spline_y(t, y);
 
     for (int i = 0; i <= 100; i++) {
         double sx = spline_x(i / 100.0);

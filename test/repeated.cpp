@@ -13,8 +13,7 @@ TEST_CASE("Same instance repeated interpolation.")
     std::vector<double> const knots1 = { 1, 2 };
     std::vector<double> const values1 = { 10, 20 };
 
-    cubic_spline spline;
-    spline.calc(knots1, values1, cubic_spline::natural);
+    cubic_spline spline(knots1, values1, cubic_spline::natural);
 
     CHECK(spline(0.5) == Approx(5));
     CHECK(spline(1) == Approx(10));
@@ -33,7 +32,7 @@ TEST_CASE("Same instance repeated interpolation.")
         0.15871603, -0.40323101, -0.23905208,  0.75523286, -0.38302665
     };
 
-    spline.calc(knots2, values2, cubic_spline::not_a_knot);
+    spline = cubic_spline(knots2, values2, cubic_spline::not_a_knot);
 
     // The splines reproduce knots.
     for (std::size_t i = 0; i < knots2.size(); i++) {

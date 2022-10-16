@@ -1,6 +1,6 @@
 #include <vector>
 #include <cxx-spline.hpp>
-#include <stdio.h>
+#include <cstdio>
 
 int main()
 {
@@ -9,8 +9,7 @@ int main()
     const std::vector<double> y = { 1, 2, 3, 2, 1, 2 };
 
     // Spline interpolation (and extrapolation) of the points
-    cubic_spline spline;
-    spline.calc(t, y);
+    cubic_spline spline(t, y);
 
     FILE* f=fopen("1Dspline.dat","wt");
     for(double tp=-0.5;tp<6;tp+=0.1) {
@@ -21,6 +20,6 @@ int main()
     fclose(f);
 
     printf("Lower bound = %f, Upper bound = %f\n",
-	   spline.getLowerBound(), spline.getUpperBound()
+	   spline.lower_bound(), spline.upper_bound()
 	    );
 }
