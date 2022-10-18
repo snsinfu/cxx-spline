@@ -1,5 +1,4 @@
 // Tests for cubic_spline.
-#define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 
 #include <cstddef>
