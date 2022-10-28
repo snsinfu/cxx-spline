@@ -53,16 +53,13 @@ int main()
     std::vector<double> y = { 1, 2, 3, 2, 1, 2 };
 
     // Spline interpolation (and extrapolation) of the points
-    cubic_spline spline;
-    spline.calc(t, y);
+    cubic_spline spline(t, y);
 
     spline(0.5); // 1.44976
     spline(1.5); // 2.65072
     spline(6.0); // 3
 }
 ```
-You can call `calc` as much as you like to update the splines. See the
-demo directory for this file in action.
 
 To interpolate a 2D (or higher dimensional) curve, just create splines for each
 coordinate values. Example:
@@ -80,10 +77,8 @@ int main()
     std::vector<double> y = { 0, 1, 0, -1, 0 };
 
     // Spline interpolation of each coordinate.
-    cubic_spline spline_x;
-    spline_x.calc(t, x);
-    cubic_spline spline_y;
-    spline_y.calc(t, y);
+    cubic_spline spline_x(t, x);
+    cubic_spline spline_y(t, y);
 
     for (int i = 0; i <= 100; i++) {
         double sx = spline_x(i / 100.0);
@@ -101,10 +96,8 @@ Pass `cubic_spline::natural` or `cubic_spline::not_a_knot` to the constructor
 to choose the boundary conditions. Natural is the default.
 
 ```c++
-cubic_spline natural_spline;
-natural_spline.calc(t, x, cubic_spline::natural);
-cubic_spline notaknot_spline;
-notaknot_spline.calc(t, x, cubic_spline::not_a_knot);
+cubic_spline natural_spline(t, x, cubic_spline::natural);
+cubic_spline notaknot_spline(t, x, cubic_spline::not_a_knot);
 ```
 
 The *natural* (or free-end) spline gives the minimum-energy curve in a certain
