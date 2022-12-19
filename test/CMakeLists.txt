@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.8.0)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -17,8 +17,6 @@ add_library(Catch INTERFACE)
 add_library(catchmain catchmain.cpp)
 
 target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
-
-find_package(Threads)
 
 add_executable(natural natural.cpp)
 target_link_libraries(natural Catch catchmain)

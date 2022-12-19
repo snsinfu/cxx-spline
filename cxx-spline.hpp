@@ -106,7 +106,7 @@ namespace detail_cubic_spline
 
 
 /*
- * Cubic spline functor for interpolating one-dimensional series of values.
+ * Cubic spline class for interpolating one-dimensional series of values.
  */
 class cubic_spline
 {
