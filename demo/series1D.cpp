@@ -1,5 +1,5 @@
 #include <vector>
-#include <cxx-spline.hpp>
+#include <cxx-spline.h>
 #include <cstdio>
 
 int main()

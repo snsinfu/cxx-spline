@@ -5,7 +5,7 @@
 #include <limits>
 #include <vector>
 
-#include <cxx-spline.hpp>
+#include <cxx-spline.h>
 
 
 

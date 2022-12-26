@@ -5,14 +5,15 @@
 #include <limits>
 #include <vector>
 
-#include <cxx-spline.hpp>
+#include <cxx-spline.h>
 
 TEST_CASE("Same instance repeated interpolation.")
 {
+    cubic_spline spline;
+
     std::vector<double> const knots1 = { 1, 2 };
     std::vector<double> const values1 = { 10, 20 };
-
-    cubic_spline spline(knots1, values1, cubic_spline::natural);
+    spline = cubic_spline(knots1, values1, cubic_spline::natural);
 
     CHECK(spline(0.5) == Approx(5));
     CHECK(spline(1) == Approx(10));

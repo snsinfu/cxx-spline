@@ -135,11 +135,12 @@ public:
     static constexpr auto natural = boundary_conditions::natural;
     static constexpr auto not_a_knot = boundary_conditions::not_a_knot;
 
-    /*
+    /**
      * Evaluates the cubic splines at `t`.
      */
     double operator()(double t) const
     {
+        if (_splines.empty()) throw std::invalid_argument("No spline data");
         spline_data const& spline = find_spline(t);
         double value = spline.coefficients[order];
         for (int i = order - 1; i >= 0; i--) {
@@ -150,9 +151,17 @@ public:
     }
 
     /**
+     * Checks if we have spline data.
+     */
+    bool hasSpline() const {
+        return !(_splines.empty());
+    }
+
+    /**
      * Gets the lowest timestamp or x value
      */
     double lower_bound() const {
+        if (_splines.empty()) throw std::invalid_argument("No spline data");
         return _lower_bound;
     }
 
@@ -160,8 +169,11 @@ public:
      * Gets the highest timestamp or x value
      */
     double upper_bound() const {
+        if (_splines.empty()) throw std::invalid_argument("No spline data");
         return _upper_bound;
     }
+
+    cubic_spline () = default;
 
     /*
      * Constructs a cubic spline function that passes through given knots.

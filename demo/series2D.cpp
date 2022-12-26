@@ -1,10 +1,7 @@
 #include <vector>
-#include <cxx-spline.hpp>
+#include <cxx-spline.h>
 #include <iostream>
 
-#include <iostream>
-#include <vector>
-#include <cxx-spline.hpp>
 
 int main()
 {
