@@ -23,7 +23,7 @@ sudo apt install catch
 
 ## Usage
 
-It's just the header `cxx-spline.hpp` which you need. Either
+It's just the header `cxx-spline.h` which you need. Either
 use `make install` to install it on your system or just copy
 the header into your project directory.
 
@@ -36,13 +36,13 @@ sudo make install
 ```
 or
 
-### Copy [cxx-spline.hpp](cxx-spline.hpp) into your include directory.
+### Copy [cxx-spline.h](cxx-spline.h) into your include directory.
 
 ### Use `cubic_spline` class like this
 
 ```c++
 #include <vector>
-#include <cxx-spline.hpp>
+#include <cxx-spline.h>
 
 int main()
 {
@@ -65,7 +65,7 @@ coordinate values. Example:
 ```c++
 #include <iostream>
 #include <vector>
-#include <cxx-spline.hpp>
+#include <cxx-spline.h>
 
 int main()
 {
