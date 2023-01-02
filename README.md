@@ -1,27 +1,48 @@
 # Cubic splines for C++
 
 ![C++11][cxx-badge]
-![Test status][test-badge]
 [![Boost License][license-badge]](LICENSE.txt)
+
+![alt tag](teaser.png)
 
 Header-only cubic spline interpolator for C++11 and above.
 
 [cxx-badge]: https://img.shields.io/badge/C%2B%2B-11-orange.svg
-[test-badge]: https://github.com/snsinfu/cxx-spline/workflows/test/badge.svg
 [license-badge]: https://img.shields.io/badge/license-Boost-blue.svg
 
 - [Usage](#usage)
-- [Testing](#testing)
 - [License](#license)
+
+## Prerequisites
+
+Catch (standard Linux package from the package manager):
+
+```
+sudo apt install catch
+```
 
 ## Usage
 
-Copy [spline.hpp](include/spline.hpp) into your include directory. Use
-`cubic_spline` class like this:
+It's just the header `cxx-spline.h` which you need. Either
+use `make install` to install it on your system or just copy
+the header into your project directory.
+
+### Installing the header on your system
+```
+cmake .
+make
+make test
+sudo make install
+```
+or
+
+### Copy [cxx-spline.h](cxx-spline.h) into your include directory.
+
+### Use `cubic_spline` class like this
 
 ```c++
 #include <vector>
-#include <spline.hpp>
+#include <cxx-spline.h>
 
 int main()
 {
@@ -44,7 +65,7 @@ coordinate values. Example:
 ```c++
 #include <iostream>
 #include <vector>
-#include <spline.hpp>
+#include <cxx-spline.h>
 
 int main()
 {
@@ -64,6 +85,7 @@ int main()
     }
 }
 ```
+See again the demo directory for this example in action.
 
 ## Boundary conditions
 
@@ -84,9 +106,9 @@ used for visualization.
 ## Testing
 
 ```sh
-git clone https://github.com/snsinfu/cxx-spline.git
-cd cxx-spline/test
+cmake .
 make
+make test
 ```
 
 ## License

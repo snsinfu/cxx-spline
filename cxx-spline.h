@@ -1,6 +1,7 @@
 // Cubic spline
 
 // Copyright snsinfu 2020-2021.
+// Copyright Bernd Porr 2022.
 // Distributed under the Boost Software License, Version 1.0.
 //
 // Permission is hereby granted, free of charge, to any person or organization
@@ -33,7 +34,6 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <vector>
-
 
 namespace detail_cubic_spline
 {
@@ -106,7 +106,7 @@ namespace detail_cubic_spline
 
 
 /*
- * Cubic spline functor for interpolating one-dimensional series of values.
+ * Cubic spline class for interpolating one-dimensional series of values.
  */
 class cubic_spline
 {
@@ -135,43 +135,53 @@ public:
     static constexpr auto natural = boundary_conditions::natural;
     static constexpr auto not_a_knot = boundary_conditions::not_a_knot;
 
-    /*
-     * Constructs a cubic spline function that passes through given knots.
-     */
-    cubic_spline(
-        std::vector<double> const& t,
-        std::vector<double> const& x,
-        boundary_conditions bc = natural
-    )
-    {
-        make_spline(t, x, bc);
-        make_bins();
-    }
-
-    /*
+    /**
      * Evaluates the cubic splines at `t`.
      */
     double operator()(double t) const
     {
+        if (_splines.empty()) throw std::invalid_argument("No spline data");
         spline_data const& spline = find_spline(t);
-
         double value = spline.coefficients[order];
         for (int i = order - 1; i >= 0; i--) {
             value *= t - spline.knot;
             value += spline.coefficients[i];
         }
-
         return value;
     }
 
-private:
-    /*
-     * Constructs spline segments `_splines` for given set of knot points.
+    /**
+     * Checks if we have spline data.
      */
-    void make_spline(
+    bool hasSpline() const {
+        return !(_splines.empty());
+    }
+
+    /**
+     * Gets the lowest timestamp or x value
+     */
+    double lower_bound() const {
+        if (_splines.empty()) throw std::invalid_argument("No spline data");
+        return _lower_bound;
+    }
+
+    /**
+     * Gets the highest timestamp or x value
+     */
+    double upper_bound() const {
+        if (_splines.empty()) throw std::invalid_argument("No spline data");
+        return _upper_bound;
+    }
+
+    cubic_spline () = default;
+
+    /*
+     * Constructs a cubic spline function that passes through given knots.
+     */
+    cubic_spline (
         std::vector<double> const& knots,
         std::vector<double> const& values,
-        boundary_conditions bc
+        boundary_conditions bc = natural
     )
     {
         if (knots.size() != values.size()) {
@@ -268,6 +278,8 @@ private:
         detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y);
         auto const& M = Y;
 
+	_bins.clear();
+
         // Derive the polynomial coefficients of each spline segment from the
         // second derivatives `M`.
         _splines.clear();
@@ -287,14 +299,6 @@ private:
 
         _lower_bound = knots.front();
         _upper_bound = knots.back();
-    }
-
-    /*
-     * Builds a bin-based index `_bins` that is used to quickly find a spline
-     * segment covering a query point.
-     */
-    void make_bins()
-    {
         _bin_interval = (_upper_bound - _lower_bound) / double(_splines.size());
 
         // We need to map uniformly-spaced bins to spline segments that may
@@ -321,6 +325,8 @@ private:
         _bins.shrink_to_fit();
     }
 
+private:
+
     /*
      * Returns the spline segment that covers given point `t`.
      */
@@ -339,8 +345,6 @@ private:
         }
         std::size_t index = _bins[bin];
 
-        assert(t >= _splines[index].knot);
-
         for (; index + 1 < _splines.size(); index++) {
             if (t < _splines[index + 1].knot) {
                 break;
@@ -350,12 +354,11 @@ private:
         return _splines[index];
     }
 
-private:
     std::vector<spline_data> _splines;
     std::vector<std::size_t> _bins;
-    double _lower_bound;
-    double _upper_bound;
-    double _bin_interval;
+    double _lower_bound = 0;
+    double _upper_bound = 0;
+    double _bin_interval = 0;
 };
 
 #endif
