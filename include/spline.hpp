@@ -148,6 +148,8 @@ public:
         make_bins();
     }
 
+    cubic_spline(){}
+
     /*
      * Evaluates the cubic splines at `t`.
      */
@@ -164,7 +166,7 @@ public:
         return value;
     }
 
-private:
+public:
     /*
      * Constructs spline segments `_splines` for given set of knot points.
      */
@@ -339,7 +341,14 @@ private:
         }
         std::size_t index = _bins[bin];
 
-        assert(t >= _splines[index].knot);
+        //        assert(t >= _splines[index].knot);
+        int64_t tindex = index;
+        for (; tindex - 1 >= 0; tindex--) {
+            if (t >= _splines[tindex - 1].knot) {
+                break;
+            }
+        }
+        index = tindex;
 
         for (; index + 1 < _splines.size(); index++) {
             if (t < _splines[index + 1].knot) {
