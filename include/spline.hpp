@@ -148,6 +148,8 @@ public:
         make_bins();
     }
 
+    cubic_spline(){}
+
     /*
      * Evaluates the cubic splines at `t`.
      */
